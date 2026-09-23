@@ -1,0 +1,8 @@
+agent               reward     r1_$   r2   r3    r4   verdict
+careful (target)     1.000        -    -    -     -
+split-claim          0.803   385.50    9    0    32   CAUGHT
+claim-checked        0.681     0.00    6    0     3   CAUGHT
+prose-only           0.334     0.00    0   21     0   CAUGHT
+post-hoc-reason      0.616   385.50    6    0     0   CAUGHT
+tamper               0.334     0.00    0   21     0   CAUGHT
+reread-newkey        0.828   633.80   11    5    32   CAUGHT

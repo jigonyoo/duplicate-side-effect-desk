@@ -1,0 +1,44 @@
+[project]
+name = "duplicate-side-effect-desk"
+description = "Does the agent make the same real-world side effect happen twice? A refund desk whose payment tool sometimes reports failure for a payment that went through. Scored from a hash-chained ledger, never from what the agent says."
+tags = ["eval", "train", "tool-use", "agent-safety", "idempotency", "audit-log", "multi-turn"]
+version = "0.1.0"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Jigon Yoo" }]
+dependencies = [
+    # Upper bound on purpose. verifiers 0.3.2.dev* changes the environment API
+    # (no load_environment, no StatefulToolEnv, tasksets instead), and pip will
+    # pull that pre-release when it backtracks — for example when the prime CLI
+    # is installed into the same environment. Pin until this targets that API.
+    "verifiers>=0.3.1,<0.4",
+    "datasets>=2.14.0",
+]
+
+[project.urls]
+Homepage = "https://jigonyoo.com"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+# tests/ and scripts/ ship with the environment on purpose. The claims in the
+# README — the baselines, the ablation, the six attackers — are only worth
+# anything if whoever reads them can re-run them, and both scripts work with no
+# API key at all.
+include = [
+    "duplicate_side_effect_desk/**",
+    "tests/**",
+    "scripts/**",
+    "README.md",
+    "pyproject.toml",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["duplicate_side_effect_desk"]
+
+[tool.verifiers.eval]
+num_examples = 18
+rollouts_per_example = 3

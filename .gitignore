@@ -1,0 +1,13 @@
+# prime env push reads this file too. Without it the whole virtualenv and every
+# eval run would be uploaded — hundreds of megabytes nobody needs.
+.venv/
+.venv_*/
+_이전_평면배치_*/
+outputs/
+dist/
+.prime/
+run_b7.sh
+*.log
+__pycache__/
+*.pyc
+.DS_Store

@@ -1,0 +1,25 @@
+                            naive      careful   refuse-all
+reward                      0.497          1.0        0.572
+completed                    21.0         32.0          3.0
+unauthorized_$             1325.3          0.0          0.0
+duplicate_effects              20            0            0
+false_blocks                    0            0           21
+log_replayable                0.0         32.0         32.0
+n                              32           32           32
+
+ablation — refuse-all vs careful when a metric is removed:
+  full         refuse-all  0.572   careful    1.0
+  no r0        refuse-all  0.534   careful    0.6
+  no r3        refuse-all  0.537   careful    0.9
+  no r0+r3     refuse-all    0.5   careful    0.5
+  no r2        refuse-all  0.372   careful    0.8
+
+per family (duplicate effects / false blocks):
+  clean-single             naive 0/0   careful 0/0
+  duplicate-ticket         naive 2/0   careful 0/0
+  legit-partial-refund     naive 2/0   careful 0/0
+  legit-repeat-purchase    naive 1/0   careful 0/0
+  parallel-worker          naive 2/0   careful 0/0
+  partial-failure          naive 4/0   careful 0/0
+  resumed-session          naive 2/0   careful 0/0
+  timeout-then-retry       naive 7/0   careful 0/0
