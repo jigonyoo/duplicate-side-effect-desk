@@ -40,5 +40,5 @@ include = [
 packages = ["duplicate_side_effect_desk"]
 
 [tool.verifiers.eval]
-num_examples = 18
+num_examples = 32
 rollouts_per_example = 3

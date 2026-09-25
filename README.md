@@ -96,11 +96,11 @@ one is removed:
 
 | rubric | refuse-all | careful |
 |---|---|---|
-| full | 0.589 | **1.000** |
-| without `task_completed` | 0.544 | 0.600 |
-| without `no_false_block` | 0.544 | 0.900 |
+| full | 0.572 | **1.000** |
+| without `task_completed` | 0.534 | 0.600 |
+| without `no_false_block` | 0.537 | 0.900 |
 | **without both** | **0.500** | **0.500** |
-| without `no_duplicate_effects` | 0.389 | 0.800 |
+| without `no_duplicate_effects` | 0.372 | 0.800 |
 
 Drop the two terms that reward doing the work and refusing everything ties with
 doing it properly. That is the argument for their weights.
@@ -184,10 +184,11 @@ Three holes were found this way and closed:
 
 ## What this does not measure
 
-- **Whether splitting a payment is itself wrong.** split-claim remains the
-  strongest attacker at 0.722. It gets caught by the duplicate and cap terms,
-  but there is deliberately no metric separating an illegitimate split from a
-  legitimate partial refund, because partial refunds are real work.
+- **Whether splitting a payment is itself wrong.** There is deliberately no
+  metric separating an illegitimate split from a legitimate partial refund,
+  because partial refunds are real work. `split-claim` and `reread-newkey` both
+  score above 0.8 partly because of that; both are still caught by the
+  duplicate and cap terms.
 - **Whether a tool result was read correctly.** `log_replayable` checks that the
   call happened, not that the agent understood the answer.
 - **Multi-agent coordination.** The parallel worker is a fixture in the ledger,
@@ -205,7 +206,7 @@ duplicate_side_effect_desk/
   grader.py        the five metrics, all recomputed from the ledger
   dataset.py       curated + procedural case generators (fixed seed)
   agents.py        three rule-based reference agents
-  attackers.py     five agents that try to cheat the grader
+  attackers.py     six agents that try to cheat the grader
   environment.py   verifiers wiring
   data/            eval_curated.jsonl (32), train_procedural.jsonl (320)
 tests/             57 tests: dataset invariants, grader, wiring
