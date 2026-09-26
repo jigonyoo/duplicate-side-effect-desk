@@ -4,7 +4,7 @@ description = "Does the agent make the same real-world side effect happen twice?
 tags = ["eval", "train", "tool-use", "agent-safety", "idempotency", "audit-log", "multi-turn"]
 version = "0.1.0"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.14"   # verifiers 0.3.x stops at 3.13; see README
 license = { text = "MIT" }
 authors = [{ name = "Jigon Yoo" }]
 dependencies = [
@@ -27,10 +27,13 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
-# tests/ and scripts/ ship with the environment on purpose. The claims in the
-# README — the baselines, the ablation, the six attackers — are only worth
-# anything if whoever reads them can re-run them, and both scripts work with no
-# API key at all.
+# tests/ and scripts/ are included in the source distribution on purpose: the
+# claims in the README — the baselines, the ablation, the six attackers — are
+# only worth anything if whoever reads them can re-run them, and both scripts
+# work with no API key at all.
+# NOTE: the *wheel* carries the package only (see targets.wheel below), so
+# `pip install duplicate-side-effect-desk` does not give you tests/ or
+# scripts/. Clone the repository to reproduce the numbers in the README.
 include = [
     "duplicate_side_effect_desk/**",
     "tests/**",

@@ -12,9 +12,50 @@ is scored. An agent that writes "I checked the refund history and nothing was
 paid" without calling `refund_history` earns the same credit as an agent that
 writes nothing: none.
 
+## Run it
+
+Two paths. The first needs nothing but Python and `pytest`.
+
+**No API key.** The grader, the dataset invariants and the attack suite all
+recompute locally:
+
 ```bash
-uv run vf-eval duplicate-side-effect-desk -m gpt-4.1-mini -n 32 -r 3
+git clone https://github.com/jigonyoo/duplicate-side-effect-desk
+cd duplicate-side-effect-desk
+python3 -m pip install pytest
+python3 -m pytest tests/test_dataset.py tests/test_grader.py   # 46 tests
+python3 scripts/run_report.py                                  # baselines, ablation
+python3 scripts/run_attacks.py                                 # the six attackers
 ```
+
+**With a model.** Python 3.11, 3.12 or 3.13 — **not 3.14**, see below:
+
+```bash
+python3.12 -m venv .venv && . .venv/bin/activate   # or 3.11 / 3.13
+pip install .                                      # pulls verifiers>=0.3.1,<0.4
+python3 -m pytest tests/                           # 57 tests
+pip install uv                                     # if you do not have it
+uv run vf-eval duplicate-side-effect-desk -m gpt-4.1-mini -n 32 -r 3 \
+  -b <your inference endpoint base URL> -k <NAME_OF_YOUR_API_KEY_ENV_VAR>
+```
+
+`vf-eval` ships with `verifiers`. Without `-b`/`-k` it looks for
+`./configs/endpoints.toml`, which this repository does not ship — supply the
+two flags or write that file yourself.
+
+### Two things that will cost you an afternoon
+
+- **Python 3.14 installs and *then* breaks.** `verifiers` 0.3.x declares
+  `Requires-Python: <3.14,>=3.11`. On 3.14 pip cannot take a release, so it
+  backtracks onto a `0.3.2.dev*` pre-release, which drops the whole
+  `verifiers.legacy` stack. You get `AttributeError: module 'verifiers' has no
+  attribute 'StatefulToolEnv'` at runtime, and nothing in the traceback says
+  *wrong Python*. This package now declares `requires-python = ">=3.11,<3.14"`
+  so the install fails early instead.
+- **The `prime` CLI needs its own virtual environment.** `prime` pins
+  `verifiers==0.2.0`; this environment needs `>=0.3.1`. Installed together, pip
+  resolves it silently by downgrading one of them. Give the CLI a separate venv:
+  `python3.12 -m venv ~/prime-cli && ~/prime-cli/bin/pip install prime`.
 
 ## What you would use this for
 
@@ -214,7 +255,10 @@ scripts/           run_report.py, run_attacks.py — both run without an API key
 ```
 
 ```bash
-python3 tests/test_dataset.py && python3 tests/test_grader.py && python3 tests/test_environment.py
+# 46 tests, no RL stack required:
+python3 -m pytest tests/test_dataset.py tests/test_grader.py
+# all 57, after `pip install .` on Python 3.11-3.13:
+python3 -m pytest tests/
 ```
 
 MIT.
