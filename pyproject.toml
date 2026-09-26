@@ -8,10 +8,13 @@ requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Jigon Yoo" }]
 dependencies = [
-    # Upper bound on purpose. verifiers 0.3.2.dev* changes the environment API
-    # (no load_environment, no StatefulToolEnv, tasksets instead), and pip will
-    # pull that pre-release when it backtracks — for example when the prime CLI
-    # is installed into the same environment. Pin until this targets that API.
+    # Upper bound on purpose. verifiers 0.3.2.dev* drops the whole
+    # verifiers.legacy stack: no StatefulToolEnv, and no loader that looks for
+    # a load_environment in this package. (v1.utils.loaders does define a
+    # load_environment, but it takes an EnvConfig and is not that hook.)
+    # pip will pull that pre-release when it backtracks — for example when the
+    # prime CLI is installed into the same environment. Pin until this targets
+    # that API.
     "verifiers>=0.3.1,<0.4",
     "datasets>=2.14.0",
 ]
