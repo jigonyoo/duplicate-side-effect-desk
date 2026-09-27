@@ -67,7 +67,7 @@ the 58-test result.
 
 - **Regression-testing a tool-calling agent before it touches a payment,
   booking, email or ticketing API.** The eval split is 32 hand-written cases
-  across 8 families, half of which carry a lying tool or a lagging ledger; a run tells you how many dollars the agent would have sent
+  across 8 families; in 14 of the 32 the refund tool reports an error after the money has already moved, and the ledger lags behind the write; a run tells you how many dollars the agent would have sent
   twice.
 - **Comparing models on retry discipline specifically.** Most agent benchmarks
   score whether the task got done. This one also scores what the agent did when
