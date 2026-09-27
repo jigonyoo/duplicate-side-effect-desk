@@ -23,7 +23,7 @@ recompute locally:
 git clone https://github.com/jigonyoo/duplicate-side-effect-desk
 cd duplicate-side-effect-desk
 python3 -m pip install pytest
-python3 -m pytest tests/test_dataset.py tests/test_grader.py   # 46 tests
+python3 -m pytest tests/test_dataset.py tests/test_grader.py tests/test_reporting.py   # 47 tests
 python3 scripts/run_report.py                                  # baselines, ablation
 python3 scripts/run_attacks.py                                 # the six attackers
 ```
@@ -33,7 +33,7 @@ python3 scripts/run_attacks.py                                 # the six attacke
 ```bash
 python3.12 -m venv .venv && . .venv/bin/activate   # or 3.11 / 3.13
 pip install .                                      # pulls verifiers>=0.3.1,<0.4
-python3 -m pytest tests/                           # 57 tests
+python3 -m pytest tests/                           # 58 tests
 pip install uv                                     # if you do not have it
 uv run vf-eval duplicate-side-effect-desk -m gpt-4.1-mini -n 32 -r 3 \
   -b <your inference endpoint base URL> -k <NAME_OF_YOUR_API_KEY_ENV_VAR>
@@ -42,6 +42,12 @@ uv run vf-eval duplicate-side-effect-desk -m gpt-4.1-mini -n 32 -r 3 \
 `vf-eval` ships with `verifiers`. Without `-b`/`-k` it looks for
 `./configs/endpoints.toml`, which this repository does not ship — supply the
 two flags or write that file yourself.
+
+Environment note: `multiprocess==0.70.19` can emit an ignored
+`ResourceTracker.__del__` / `_recursion_count` traceback while CPython 3.12 is
+shutting down, after pytest has printed the passing result and returned its
+exit code. This is an upstream dependency shutdown issue; it does not change
+the 58-test result.
 
 ### Two things that will cost you an afternoon
 
@@ -157,8 +163,15 @@ Three models on the 32-case eval split, 3 rollouts each (96 rollouts per model),
 | `anthropic/claude-haiku-4.5` | 0.984 | 91 / 96 | 3 | $150.00 |
 | `anthropic/claude-sonnet-4.5` | 0.985 | 92 / 96 | 3 | $205.00 |
 
-Reproduce this table and its reward distribution from the committed, redacted
-288-row extract (measured 2026-09-27): `python3 scripts/reproduce_model_table.py`.
+Reproduce this table, its reward distribution, and the separately labelled
+Sonnet hints comparison from the committed, redacted 384-row extract (measured
+2026-09-27): `python3 scripts/reproduce_model_table.py`.
+
+The extract contains two separate populations: 288 hints-disabled rows for the
+three-model table above, and 96 hints-enabled Sonnet rows. The latter reproduce
+the published comparison `91/96` perfect, 5 duplicates, and $467.40 paid twice
+or over cap; they are never pooled into the hints-disabled table. Legacy
+18-case runs and 402-error runs remain outside the public extract.
 
 Per family, on the one that carries the lying tool and the lagging ledger:
 
@@ -171,16 +184,27 @@ Per family, on the one that carries the lying tool and the lagging ledger:
 ### How to read these numbers
 
 **Mean reward is the wrong headline here, and 0.98 does not mean "almost
-perfect".** A rollout that fails completely — pays the same refund twice and
-puts the order over the cap — still scores 0.7, because it did complete the
-task and it did keep a replayable log.
+perfect".** A rollout that completes the task, keeps a replayable log, and
+does not falsely block earns a floor of `0.4 + 0.2 + 0.1 = 0.7` even if it
+pays a duplicate and exceeds the cap. That conditional floor is correct. The
+mistake was generalising it to the range of every rollout, including ones that
+did not complete the task and did falsely block.
 
 ~~The practical range of the aggregate is 0.7 to 1.0, not 0 to 1. Rollouts
 are close to bimodal: nearly all score exactly 1.0 or 0.7.~~ *(~2026-09-25,
 18-case-era wording; discarded.)* Measured 2026-09-27 on the three comparable
 32-case, hints-disabled runs, the observed range is **0.5 to 1.0**: 286/288
-rollouts fall in 0.7–1.0, and 264/288 score exactly 0.7 or 1.0. Reproduce it
-with `python3 scripts/reproduce_model_table.py`.
+rollouts fall in 0.7–1.0. ~~264/288 score exactly 0.7 or 1.0~~ *(2026-09-27
+first recount; discarded: exact float comparison omitted fourteen stored
+`0.7000000000000001` values.)* With tolerance, **278/288 (96.5%)** are rubric
+values 0.7 or 1.0. Reproduce it with
+`python3 scripts/reproduce_model_table.py`.
+
+Across every saved run, not just the public extract, the 870 non-error rows are
+`{0.5: 2, 0.6: 1, 0.7: 30, 0.8: 14, 1.0: 823}`. Including the 162 stored 402
+error rows, all 1,032 rows span **0.3 to 1.0**. The single 0.6 row is from the
+legacy 18-case `openai/gpt-4.1-mini` run `34b4e1a2`; the old 0.7-range wording
+was therefore already contradicted by data from its own era.
 
 So compare models on **duplicate payments** and **dollars**, which is what this
 environment exists to measure. On that axis the spread is 4.7x, not 3%.
@@ -258,14 +282,14 @@ duplicate_side_effect_desk/
   attackers.py     six agents that try to cheat the grader
   environment.py   verifiers wiring
   data/            eval_curated.jsonl (32), train_procedural.jsonl (320)
-tests/             57 tests: dataset invariants, grader, wiring
+tests/             58 tests: dataset invariants, grader, reporting, wiring
 scripts/           run_report.py, run_attacks.py — both run without an API key
 ```
 
 ```bash
-# 46 tests, no RL stack required:
-python3 -m pytest tests/test_dataset.py tests/test_grader.py
-# all 57, after `pip install .` on Python 3.11-3.13:
+# 47 tests, no RL stack required:
+python3 -m pytest tests/test_dataset.py tests/test_grader.py tests/test_reporting.py
+# all 58, after `pip install .` on Python 3.11-3.13:
 python3 -m pytest tests/
 ```
 
