@@ -2,7 +2,7 @@
 name = "duplicate-side-effect-desk"
 description = "Does the agent make the same real-world side effect happen twice? A refund desk whose payment tool sometimes reports failure for a payment that went through. Scored from a hash-chained ledger, never from what the agent says."
 tags = ["eval", "train", "tool-use", "agent-safety", "idempotency", "audit-log", "multi-turn"]
-version = "0.1.0"
+version = "0.1.1"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"   # verifiers 0.3.x stops at 3.13; see README
 license = { text = "MIT" }
