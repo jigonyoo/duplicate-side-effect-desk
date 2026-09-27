@@ -157,6 +157,9 @@ Three models on the 32-case eval split, 3 rollouts each (96 rollouts per model),
 | `anthropic/claude-haiku-4.5` | 0.984 | 91 / 96 | 3 | $150.00 |
 | `anthropic/claude-sonnet-4.5` | 0.985 | 92 / 96 | 3 | $205.00 |
 
+Reproduce this table and its reward distribution from the committed, redacted
+288-row extract (measured 2026-09-27): `python3 scripts/reproduce_model_table.py`.
+
 Per family, on the one that carries the lying tool and the lagging ledger:
 
 | | `timeout-then-retry` | `legit-repeat-purchase` |
@@ -170,9 +173,14 @@ Per family, on the one that carries the lying tool and the lagging ledger:
 **Mean reward is the wrong headline here, and 0.98 does not mean "almost
 perfect".** A rollout that fails completely — pays the same refund twice and
 puts the order over the cap — still scores 0.7, because it did complete the
-task and it did keep a replayable log. The practical range of the aggregate is
-0.7 to 1.0, not 0 to 1. Rollouts are close to bimodal: nearly all score exactly
-1.0 or 0.7.
+task and it did keep a replayable log.
+
+~~The practical range of the aggregate is 0.7 to 1.0, not 0 to 1. Rollouts
+are close to bimodal: nearly all score exactly 1.0 or 0.7.~~ *(~2026-09-25,
+18-case-era wording; discarded.)* Measured 2026-09-27 on the three comparable
+32-case, hints-disabled runs, the observed range is **0.5 to 1.0**: 286/288
+rollouts fall in 0.7–1.0, and 264/288 score exactly 0.7 or 1.0. Reproduce it
+with `python3 scripts/reproduce_model_table.py`.
 
 So compare models on **duplicate payments** and **dollars**, which is what this
 environment exists to measure. On that axis the spread is 4.7x, not 3%.
