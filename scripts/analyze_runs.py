@@ -1,4 +1,4 @@
-"""Per-family breakdown of the most recent eval run for each model.
+"""Per-family breakdown of the latest comparable 32-case run per model.
 
 The headline reward averages over every family, so a model that fails badly on
 the two families this environment is actually about can still post a 0.98. This
@@ -10,13 +10,26 @@ import sys
 from collections import defaultdict
 
 ROOT = pathlib.Path(__file__).resolve().parents[1] / "outputs" / "evals"
+EXPECTED_ROWS = 96
 
 def latest_per_model():
     out = {}
     for d in sorted(ROOT.iterdir()):
         if not d.is_dir():
             continue
-        runs = [r for r in d.iterdir() if (r / "results.jsonl").exists()]
+        runs = []
+        for r in d.iterdir():
+            results = r / "results.jsonl"
+            metadata = r / "metadata.json"
+            if not results.exists() or not metadata.exists():
+                continue
+            rows = load(r)
+            meta = json.loads(metadata.read_text(encoding="utf-8"))
+            if len(rows) != EXPECTED_ROWS:
+                continue
+            if meta.get("env_args", {}).get("hints") is True:
+                continue
+            runs.append(r)
         if not runs:
             continue
         out[d.name] = max(runs, key=lambda r: r.stat().st_mtime)
