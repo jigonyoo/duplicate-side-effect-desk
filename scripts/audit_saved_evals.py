@@ -2,9 +2,18 @@
 
 import json
 import re
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from duplicate_side_effect_desk.reporting import (
+    count_matching_rewards,
+    format_distribution,
+    reward_distribution,
+    reward_is,
+)
 
 ROOT = Path(__file__).resolve().parents[1] / "outputs" / "evals"
 EXPECTED_ROWS = 96
@@ -23,6 +32,12 @@ def short_model(directory):
 
 
 def main():
+    if not ROOT.is_dir():
+        sys.exit(
+            "saved eval outputs are not present; this audit needs local outputs/evals. "
+            "For public reproduction, run: python3 scripts/reproduce_model_table.py"
+        )
+
     all_runs = []
     for model_dir in sorted(path for path in ROOT.iterdir() if path.is_dir()):
         for run_dir in sorted(path for path in model_dir.iterdir() if path.is_dir()):
@@ -52,7 +67,7 @@ def main():
     print("\ncomparable 32-case runs (hints disabled)")
     for model in sorted(official):
         run_dir, rows = official[model]
-        perfect = sum(row["reward"] == 1.0 for row in rows)
+        perfect = sum(reward_is(row["reward"], 1.0) for row in rows)
         duplicates = int(sum(row["duplicate_effects"] for row in rows))
         unauthorized = sum(row["unauthorized_cents"] for row in rows) / 100
         print(
@@ -70,6 +85,52 @@ def main():
         for family in ("timeout-then-retry", "legit-repeat-purchase"):
             group = by_family[family]
             print(f"{model} {family}: n={len(group)} mean={mean(group):.6f}")
+
+    print("\nsaved reward distributions by model and run")
+    for model, run_dir, rows, metadata in sorted(all_runs, key=lambda item: (item[0], item[1].name)):
+        split = split_name(len(rows))
+        hints = metadata.get("env_args", {}).get("hints", False)
+        non_error = [row for row in rows if row.get("error") is None]
+        print(
+            f"{model} {run_dir.name} {split} hints={hints} rows={len(rows)} "
+            f"errors={len(rows) - len(non_error)} all=[{format_distribution(reward_distribution(rows))}] "
+            f"non_error=[{format_distribution(reward_distribution(non_error)) or '-'}]"
+        )
+
+    print("\nsaved reward distributions by model and split")
+    grouped = defaultdict(list)
+    for model, _, rows, _ in all_runs:
+        grouped[(model, split_name(len(rows)))].extend(rows)
+    for (model, split), rows in sorted(grouped.items()):
+        non_error = [row for row in rows if row.get("error") is None]
+        print(
+            f"{model} {split} rows={len(rows)} "
+            f"all=[{format_distribution(reward_distribution(rows))}] "
+            f"non_error=[{format_distribution(reward_distribution(non_error)) or '-'}]"
+        )
+
+    print("\nsaved reward distributions by split")
+    for split in ("legacy-18", "current-32"):
+        rows = [
+            row
+            for _, _, run_rows, _ in all_runs
+            if split_name(len(run_rows)) == split
+            for row in run_rows
+        ]
+        non_error = [row for row in rows if row.get("error") is None]
+        print(
+            f"{split} rows={len(rows)} all=[{format_distribution(reward_distribution(rows))}] "
+            f"non_error=[{format_distribution(reward_distribution(non_error)) or '-'}]"
+        )
+
+    all_rows = [row for _, _, rows, _ in all_runs for row in rows]
+    non_error_rows = [row for row in all_rows if row.get("error") is None]
+    print("\nsaved reward distribution totals")
+    print(f"all {len(all_rows)}: {format_distribution(reward_distribution(all_rows))}")
+    print(
+        f"excluding error rows {len(non_error_rows)}: "
+        f"{format_distribution(reward_distribution(non_error_rows))}"
+    )
 
     error_rows = [
         row
@@ -130,12 +191,15 @@ def main():
     print(" ".join(f"{name}={scan_counts[name]}" for name in patterns))
 
     selected = [row for _, rows in official.values() for row in rows]
-    distribution = Counter(row["reward"] for row in selected)
+    distribution = reward_distribution(selected)
     print("\nselected reward distribution")
-    print(" ".join(f"{score:.3f}:{distribution[score]}" for score in sorted(distribution)))
+    print(format_distribution(distribution))
     print(f"range: {min(distribution):.3f} to {max(distribution):.3f}")
     print(f"0.7 to 1.0: {sum(0.7 <= row['reward'] <= 1.0 for row in selected)}/{len(selected)}")
-    print(f"exactly 0.7 or 1.0: {sum(row['reward'] in (0.7, 1.0) for row in selected)}/{len(selected)}")
+    print(
+        "approximately 0.7 or exactly 1.0: "
+        f"{count_matching_rewards(selected, (0.7, 1.0))}/{len(selected)}"
+    )
 
 
 def load_metadata(path):
@@ -144,6 +208,14 @@ def load_metadata(path):
 
 def mean(rows):
     return sum(row["reward"] for row in rows) / len(rows)
+
+
+def split_name(row_count):
+    if row_count == 54:
+        return "legacy-18"
+    if row_count == 96:
+        return "current-32"
+    return f"other-{row_count}"
 
 
 if __name__ == "__main__":
