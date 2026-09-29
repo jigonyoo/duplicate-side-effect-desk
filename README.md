@@ -173,7 +173,9 @@ the published comparison `91/96` perfect, 5 duplicates, and $467.40 paid twice
 or over cap; they are never pooled into the hints-disabled table. Legacy
 18-case runs and 402-error runs remain outside the public extract.
 
-Per family, on the one that carries the lying tool and the lagging ledger:
+Per family, for two of the four families that carry the lying tool and the
+lagging ledger (7 of 7 cases in `timeout-then-retry`, 1 of 4 in
+`legit-repeat-purchase`):
 
 | | `timeout-then-retry` | `legit-repeat-purchase` |
 |---|---|---|
