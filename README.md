@@ -216,8 +216,11 @@ because the training split needs a usable gradient. That choice is what
 compresses the aggregate, and it is the reason the aggregate should not be
 quoted on its own.
 
-**What the models actually did.** All three read the order and the refund ledger
-before paying — none of them skipped the check. They differ in what they do
+**What the models actually did.** All three almost always read the order and the
+refund ledger before paying: in 2 of the 288 hints-disabled rollouts (one
+`openai/gpt-4.1-mini`, one `anthropic/claude-haiku-4.5`, both on `cur-partial-04`)
+the task was completed but the log did not justify the payment
+(`log_replayable = 0` in the extract). They differ in what they do
 when `issue_refund` returns a timeout. Reusing the same idempotency key is safe;
 re-reading the ledger and paying again with a fresh key is not, because the
 ledger has not caught up yet. gpt-4.1-mini took the second route most often.
